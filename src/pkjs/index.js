@@ -1,8 +1,26 @@
 // PebbleKit JS — runs on the phone.
 // Fetches weather (hourly) and WH40K quotes (every 10 min), sends to watch via AppMessage.
+// Uses XMLHttpRequest — fetch() is not available in the PebbleKit JS runtime.
 
 var KEY_WEATHER = 0;
 var KEY_QUOTE   = 1;
+
+// ── XHR helper ────────────────────────────────────────────────────────────────
+
+function xhrGet(url, responseType, onSuccess, onError) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url);
+    xhr.responseType = responseType;
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            onSuccess(xhr.response);
+        } else {
+            onError('HTTP ' + xhr.status);
+        }
+    };
+    xhr.onerror = function() { onError('XHR network error'); };
+    xhr.send();
+}
 
 // ── Weather ───────────────────────────────────────────────────────────────────
 
@@ -28,19 +46,18 @@ function fetchWeather(lat, lon) {
         '&longitude=' + lon +
         '&current=temperature_2m,weather_code';
 
-    fetch(url)
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            var temp = Math.round(data.current.temperature_2m);
-            var desc = getWeatherDescription(data.current.weather_code);
-            var msg  = {};
-            msg[KEY_WEATHER] = temp + '°C ' + desc;
-            Pebble.sendAppMessage(msg,
-                function()  { console.log('Weather sent'); },
-                function(e) { console.log('Weather send failed: ' + JSON.stringify(e)); }
-            );
-        })
-        .catch(function(e) { console.log('Weather fetch error: ' + e); });
+    xhrGet(url, 'json', function(data) {
+        var temp = Math.round(data.current.temperature_2m);
+        var desc = getWeatherDescription(data.current.weather_code);
+        var msg  = {};
+        msg[KEY_WEATHER] = temp + '°C ' + desc;
+        Pebble.sendAppMessage(msg,
+            function()  { console.log('Weather sent'); },
+            function(e) { console.log('Weather send failed: ' + JSON.stringify(e)); }
+        );
+    }, function(err) {
+        console.log('Weather fetch error: ' + err);
+    });
 }
 
 function requestWeather() {
@@ -58,18 +75,17 @@ function requestWeather() {
 // ── Quote ─────────────────────────────────────────────────────────────────────
 
 function fetchQuote() {
-    fetch('http://sabletopia.co.uk/ids2/quote.php')
-        .then(function(r) { return r.text(); })
-        .then(function(text) {
-            var quote = '++ THOUGHT FOR THE DAY ++|' + text.trim();
-            var msg   = {};
-            msg[KEY_QUOTE] = quote;
-            Pebble.sendAppMessage(msg,
-                function()  { console.log('Quote sent'); },
-                function(e) { console.log('Quote send failed: ' + JSON.stringify(e)); }
-            );
-        })
-        .catch(function(e) { console.log('Quote fetch error: ' + e); });
+    xhrGet('http://sabletopia.co.uk/ids2/quote.php', 'text', function(text) {
+        var quote = '++ THOUGHT FOR THE DAY ++|' + text.trim();
+        var msg   = {};
+        msg[KEY_QUOTE] = quote;
+        Pebble.sendAppMessage(msg,
+            function()  { console.log('Quote sent'); },
+            function(e) { console.log('Quote send failed: ' + JSON.stringify(e)); }
+        );
+    }, function(err) {
+        console.log('Quote fetch error: ' + err);
+    });
 }
 
 // ── Startup ───────────────────────────────────────────────────────────────────
