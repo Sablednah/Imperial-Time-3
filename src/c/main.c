@@ -234,27 +234,28 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
     }
 
     // ── Quote (pipe-delimited lines above imperial date) ──
+    // Pre-split with strchr before drawing — graphics_draw_text uses strtok
+    // internally for word-wrap, which would reset global strtok state mid-loop.
     {
         char buf[512];
         strncpy(buf, s_quote, sizeof(buf) - 1);
         buf[sizeof(buf) - 1] = '\0';
 
-        // Count lines
-        int line_count = 1;
-        for (int i = 0; buf[i]; i++) {
-            if (buf[i] == '|') line_count++;
+        char *lines[8];
+        int line_count = 0;
+        char *p = buf;
+        while (*p && line_count < 8) {
+            lines[line_count++] = p;
+            char *pipe = strchr(p, '|');
+            if (!pipe) break;
+            *pipe = '\0';
+            p = pipe + 1;
         }
 
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "quote draw: %d lines, buf=%.40s", line_count, buf);
-
-        char *line = strtok(buf, "|");
-        int remaining = line_count;
-        while (line) {
+        for (int i = 0; i < line_count; i++) {
+            int remaining = line_count - i;
             int y = LAYOUT_IMP_Y - remaining * LAYOUT_TINY_H - 2;
-            APP_LOG(APP_LOG_LEVEL_DEBUG, "  line y=%d: %s", y, line);
-            draw_quote_line(ctx, line, y);
-            remaining--;
-            line = strtok(NULL, "|");
+            draw_quote_line(ctx, lines[i], y);
         }
     }
 
