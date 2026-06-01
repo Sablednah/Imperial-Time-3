@@ -77,6 +77,7 @@ function requestWeather() {
 function fetchQuote() {
     xhrGet('http://sabletopia.co.uk/ids2/quote.php', 'text', function(text) {
         var quote = '++ THOUGHT FOR THE DAY ++|' + text.trim();
+        console.log('Quote text (' + quote.length + ' chars): ' + quote.substring(0, 80));
         var msg   = {};
         msg[KEY_QUOTE] = quote;
         Pebble.sendAppMessage(msg,

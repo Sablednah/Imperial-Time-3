@@ -245,10 +245,13 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
             if (buf[i] == '|') line_count++;
         }
 
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "quote draw: %d lines, buf=%.40s", line_count, buf);
+
         char *line = strtok(buf, "|");
         int remaining = line_count;
         while (line) {
             int y = LAYOUT_IMP_Y - remaining * LAYOUT_TINY_H - 2;
+            APP_LOG(APP_LOG_LEVEL_DEBUG, "  line y=%d: %s", y, line);
             draw_quote_line(ctx, line, y);
             remaining--;
             line = strtok(NULL, "|");
@@ -293,13 +296,19 @@ static void inbox_received_handler(DictionaryIterator *iterator, void *context) 
     Tuple *weather_t = dict_find(iterator, KEY_WEATHER);
     Tuple *quote_t   = dict_find(iterator, KEY_QUOTE);
 
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "inbox: weather=%s quote=%s",
+            weather_t ? "found" : "missing",
+            quote_t   ? "found" : "missing");
+
     if (weather_t) {
         strncpy(s_weather, weather_t->value->cstring, sizeof(s_weather) - 1);
         s_weather[sizeof(s_weather) - 1] = '\0';
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "weather: %s", s_weather);
     }
     if (quote_t) {
         strncpy(s_quote, quote_t->value->cstring, sizeof(s_quote) - 1);
         s_quote[sizeof(s_quote) - 1] = '\0';
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "quote len=%d: %.80s", (int)strlen(s_quote), s_quote);
     }
 
     layer_mark_dirty(s_canvas);
