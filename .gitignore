@@ -1,0 +1,4 @@
+build/
+.pebble-linked-sdk
+node_modules/
+*.pbw

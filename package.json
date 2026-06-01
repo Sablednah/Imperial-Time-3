@@ -1,0 +1,31 @@
+{
+    "author": "SableCraft",
+    "dependencies": {},
+    "keywords": [
+        "pebble-app"
+    ],
+    "name": "imperial-time-3",
+    "pebble": {
+        "capabilities": [
+            "location"
+        ],
+        "displayName": "Imperial Time 3",
+        "messageKeys": [
+            "KEY_WEATHER",
+            "KEY_QUOTE"
+        ],
+        "resources": {
+            "media": []
+        },
+        "sdkVersion": "3",
+        "targetPlatforms": [
+            "emery",
+            "gabbro"
+        ],
+        "uuid": "c8a94f2e-7d3b-4c6a-b5e8-2f4a1d9e3c7b",
+        "watchapp": {
+            "watchface": true
+        }
+    },
+    "version": "1.0.0"
+}
