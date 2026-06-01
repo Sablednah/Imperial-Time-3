@@ -31,7 +31,13 @@ static GFont               s_font_small;  // Gothic 18  — date / weather / exa
 static GFont               s_font_tiny;   // Gothic 14  — imperial date / quote
 
 static char                s_weather[64]  = "Loading...";
-static char                s_quote[512]   = "++ THOUGHT FOR THE DAY ++|--- REDACTED ---";
+// Quote stored pre-split — parsing happens in inbox handler, not at draw time,
+// so canvas_update_proc carries zero stack cost for quote buffers.
+static char                s_quote_lines[8][64] = {
+    "++ THOUGHT FOR THE DAY ++",
+    "--- REDACTED ---"
+};
+static int                 s_quote_line_count   = 2;
 static bool                s_bt_connected = true;
 static BatteryChargeState  s_battery;
 static struct tm           s_now;
@@ -233,30 +239,11 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
         draw_centred_text(ctx, imperial, s_font_tiny, LAYOUT_IMP_Y);
     }
 
-    // ── Quote (pipe-delimited lines above imperial date) ──
-    // Pre-split with strchr before drawing — graphics_draw_text uses strtok
-    // internally for word-wrap, which would reset global strtok state mid-loop.
-    {
-        char buf[512];
-        strncpy(buf, s_quote, sizeof(buf) - 1);
-        buf[sizeof(buf) - 1] = '\0';
-
-        char *lines[8];
-        int line_count = 0;
-        char *p = buf;
-        while (*p && line_count < 8) {
-            lines[line_count++] = p;
-            char *pipe = strchr(p, '|');
-            if (!pipe) break;
-            *pipe = '\0';
-            p = pipe + 1;
-        }
-
-        for (int i = 0; i < line_count; i++) {
-            int remaining = line_count - i;
-            int y = LAYOUT_IMP_Y - remaining * LAYOUT_TINY_H - 2;
-            draw_quote_line(ctx, lines[i], y);
-        }
+    // ── Quote (pre-parsed globals, zero stack cost here) ──
+    for (int i = 0; i < s_quote_line_count; i++) {
+        int remaining = s_quote_line_count - i;
+        int y = LAYOUT_IMP_Y - remaining * LAYOUT_TINY_H - 2;
+        draw_quote_line(ctx, s_quote_lines[i], y);
     }
 
     // ── Weather (bottom-left) and exact time (bottom-right) ──
@@ -307,9 +294,20 @@ static void inbox_received_handler(DictionaryIterator *iterator, void *context) 
         APP_LOG(APP_LOG_LEVEL_DEBUG, "weather: %s", s_weather);
     }
     if (quote_t) {
-        strncpy(s_quote, quote_t->value->cstring, sizeof(s_quote) - 1);
-        s_quote[sizeof(s_quote) - 1] = '\0';
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "quote len=%d: %.80s", (int)strlen(s_quote), s_quote);
+        const char *raw = quote_t->value->cstring;
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "quote: %.80s", raw);
+        s_quote_line_count = 0;
+        const char *p = raw;
+        while (*p && s_quote_line_count < 8) {
+            const char *pipe = strchr(p, '|');
+            int len = pipe ? (int)(pipe - p) : (int)strlen(p);
+            if (len > 63) len = 63;
+            strncpy(s_quote_lines[s_quote_line_count], p, len);
+            s_quote_lines[s_quote_line_count][len] = '\0';
+            s_quote_line_count++;
+            if (!pipe) break;
+            p = pipe + 1;
+        }
     }
 
     layer_mark_dirty(s_canvas);
