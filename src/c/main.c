@@ -4,23 +4,23 @@
 #define KEY_WEATHER 0
 #define KEY_QUOTE   1
 
-// Screen dimensions (emery/gabbro: 180×180 round)
-#define W 180
-#define H 180
+// Screen dimensions (emery: Pebble Time 2, 200×228 rectangular)
+#define W 200
+#define H 228
 #define CX (W / 2)
 #define CY (H / 2)
 
 // Layout Y positions derived from the reference JS implementation:
-//   middleY = 90, timeFont.height ≈ 28, smallFont.height ≈ 18, tinyFont.height ≈ 14
-//   timeY   = middleY - 28*2 - 10 = 24
-//   timeY2  = middleY - 28   - 10 = 52
-//   dateY   = H - 18 - 18 - 7    = 137  (imperial date)
-//   weatherY = H - 18 - 5        = 157
-#define LAYOUT_TIME1_Y   24
-#define LAYOUT_TIME2_Y   52
+//   middleY = 114, timeFont.height ≈ 28, smallFont.height ≈ 18, tinyFont.height ≈ 14
+//   timeY   = middleY - 28*2 - 10 = 48
+//   timeY2  = middleY - 28   - 10 = 76
+//   dateY   = H - 18 - 18 - 7    = 185  (imperial date)
+//   weatherY = H - 18 - 5        = 205
+#define LAYOUT_TIME1_Y   48
+#define LAYOUT_TIME2_Y   76
 #define LAYOUT_DATE_Y    17
-#define LAYOUT_IMP_Y    137
-#define LAYOUT_WEATHER_Y 157
+#define LAYOUT_IMP_Y    185
+#define LAYOUT_WEATHER_Y 205
 #define LAYOUT_TINY_H    14   // approx height of GOTHIC_14 for quote spacing
 
 // ── Global state ──────────────────────────────────────────────────────────────
@@ -126,8 +126,8 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
     graphics_fill_rect(ctx, GRect(0, 0, W, H), 0, GCornerNone);
 
     // ── Analog hands ──
-    // maxLength = (min(W,H) - 20) / 2 = 80
-    const int MAX_LEN = 80;
+    // maxLength = (min(W,H) - 20) / 2 = (200-20)/2 = 90
+    const int MAX_LEN = 90;
     int hour   = s_now.tm_hour % 12;
     int minute = s_now.tm_min;
 
@@ -143,8 +143,8 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
 
     // ── Battery bar ──
     // bar: 2/3 screen width, centred, y=5, height=8
-    int bar_w  = (W / 3) * 2;             // 120
-    int bar_x  = (W - bar_w) / 2;         // 30
+    int bar_w  = (W * 2) / 3;             // 133 (matches JS float behaviour)
+    int bar_x  = (W - bar_w) / 2;         // 33
     int pct    = s_battery.charge_percent;
     GColor bar_color = (pct <= 20) ? GColorRed
                      : (pct <= 40) ? GColorChromeYellow
