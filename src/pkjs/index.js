@@ -52,7 +52,7 @@ function fetchWeather(lat, lon) {
         var msg  = {};
         msg[KEY_WEATHER] = temp + '°C ' + desc;
         Pebble.sendAppMessage(msg,
-            function()  { console.log('Weather sent'); },
+            null,
             function(e) { console.log('Weather send failed: ' + JSON.stringify(e)); }
         );
     }, function(err) {
@@ -592,9 +592,8 @@ function sendRandomQuote() {
     var wrapped = wordWrap(QUOTES[idx]);
     var msg = {};
     msg[KEY_QUOTE] = '++ THOUGHT FOR THE DAY ++|' + wrapped;
-    console.log('Quote [' + idx + ']: ' + wrapped.substring(0, 60));
     Pebble.sendAppMessage(msg,
-        function()  { console.log('Quote sent'); },
+        null,
         function(e) { console.log('Quote send failed: ' + JSON.stringify(e)); }
     );
 }
@@ -602,13 +601,8 @@ function sendRandomQuote() {
 // ── Startup ───────────────────────────────────────────────────────────────────
 
 Pebble.addEventListener('ready', function() {
-    console.log('PebbleKit JS ready');
     requestWeather();
     sendRandomQuote();
     setInterval(requestWeather, 60 * 60 * 1000);
     setInterval(sendRandomQuote, 10 * 60 * 1000);
-});
-
-Pebble.addEventListener('appmessage', function(e) {
-    console.log('Message from watch: ' + JSON.stringify(e.payload));
 });

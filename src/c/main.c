@@ -284,18 +284,12 @@ static void inbox_received_handler(DictionaryIterator *iterator, void *context) 
     Tuple *weather_t = dict_find(iterator, KEY_WEATHER);
     Tuple *quote_t   = dict_find(iterator, KEY_QUOTE);
 
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "inbox: weather=%s quote=%s",
-            weather_t ? "found" : "missing",
-            quote_t   ? "found" : "missing");
-
     if (weather_t) {
         strncpy(s_weather, weather_t->value->cstring, sizeof(s_weather) - 1);
         s_weather[sizeof(s_weather) - 1] = '\0';
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "weather: %s", s_weather);
     }
     if (quote_t) {
         const char *raw = quote_t->value->cstring;
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "quote: %.80s", raw);
         s_quote_line_count = 0;
         const char *p = raw;
         while (*p && s_quote_line_count < 8) {
